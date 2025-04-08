@@ -8,6 +8,11 @@ const port = process.env.PORT || 3000;  // Use dynamic port for Azure
 // Use body-parser middleware to parse incoming JSON data
 app.use(bodyParser.json());
 
+// Root route to check if the app is running
+app.get('/', (req, res) => {
+  res.send('Hello, your Express app is running!');
+});
+
 // Define a function to analyze code with SonarCloud
 async function analyzeCodeWithSonarCloud(repository) {
   try {
