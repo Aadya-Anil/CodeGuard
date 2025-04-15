@@ -34,11 +34,26 @@ app.post('/webhook', async (req, res) => {
   console.log('Received data:', req.body);
 
   // Example: Check if the webhook is related to a new pull request or push event
-  const { action, pull_request, repository, ref } = req.body;
+  const { action, pull_request, repository } = req.body;
 
   if (action === 'opened' || action === 'synchronize') {
     // Log when a pull request is opened or synchronized
     console.log(`Pull request #${pull_request.number} in ${repository.name} was updated`);
+
+    const securityIssuesDetected = true; // Assume issues are found for this example
+
+    if (securityIssuesDetected) {
+      // Send a POST request to Power Automate Flow to trigger an alert
+      try {
+        const response = await axios.post('https://your_power_automate_flow_url', {
+          message: `Security issue detected in pull request #${pull_request.number} for repo ${repository.name}!`,
+        });
+
+        console.log('Power Automate flow triggered:', response.status);
+      } catch (error) {
+        console.error('Error triggering Power Automate flow:', error);
+      }
+    }
 
     // Trigger SonarCloud analysis after a pull request event
     const analysisResult = await analyzeCodeWithSonarCloud(repository);
@@ -49,10 +64,13 @@ app.post('/webhook', async (req, res) => {
     } else {
       console.log('No issues found in the code');
     }
-  }
 
-  // Send a response back to GitHub
-  res.status(200).send('Webhook received and processed');
+    // Send a response back to GitHub only after processing is complete
+    res.status(200).send('Security check complete and processed');
+  } else {
+    // If the action is not 'opened' or 'synchronize', we don't need to process further
+    res.status(200).send('No action required');
+  }
 });
 
 // Start the server
