@@ -28,11 +28,7 @@ Choose application/json as the Content Type.
 Select the desired events (e.g., Push or Pull Requests).
 
 Step 3: Install Dependencies
-Run the following commands in your project directory to install required packages:
 
-bash
-npm init -y
-npm install express body-parser axios
 Step 4: Deploy on Azure
 Log into the Azure Portal and create a new Web App.
 
