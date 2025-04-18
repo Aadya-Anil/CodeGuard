@@ -29,7 +29,8 @@ async function analyzeCodeWithSonarCloud(repository) {
 
 // Define a route to handle POST requests from GitHub webhook
 app.post('/webhook', async (req, res) => {
-  console.log('Received data:', req.body);
+  console.log('📦 Webhook triggered by GitHub:', req.body);
+
 
   const { action, pull_request, repository } = req.body;
 
