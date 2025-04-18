@@ -16,10 +16,9 @@ app.get('/', (req, res) => {
 // Define a function to analyze code with SonarCloud
 async function analyzeCodeWithSonarCloud(repository) {
   try {
-    const sonarToken = 'bfdd2c1dacf89cc7f3d70155a5532c5b8bbd08e2'; // Replace with your actual SonarCloud token
+    const sonarToken = 'bfdd2c1dacf89cc7f3d70155a5532c5b8bbd08e2'; // Your actual SonarCloud token
     const sonarUrl = `https://sonarcloud.io/api/analysis?token=${sonarToken}&repo=${repository.name}`;
     
-    // Make a request to SonarCloud API (Modify the API request according to your needs)
     const result = await axios.post(sonarUrl);
     return result.data;
   } catch (error) {
@@ -30,47 +29,61 @@ async function analyzeCodeWithSonarCloud(repository) {
 
 // Define a route to handle POST requests from GitHub webhook
 app.post('/webhook', async (req, res) => {
-  // Print the payload (received data from GitHub)
   console.log('Received data:', req.body);
 
-  // Example: Check if the webhook is related to a new pull request or push event
   const { action, pull_request, repository } = req.body;
 
-  if (action === 'opened' || action === 'synchronize') {
-    // Log when a pull request is opened or synchronized
+  if (req.body.ref && req.body.head_commit) {
+    // Handle push event
+    console.log(`Push event on ${repository.full_name}`);
+    const commitId = req.body.head_commit.id;
+    const message = req.body.head_commit.message;
+
+    try {
+      const response = await axios.post(
+        'https://prod-168.westus.logic.azure.com:443/workflows/46312203162d41f88f42b9e60e22952c/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=GFBFZkThBJhqQouBnU4Jq73RTZmWiU5m-JKye6GWKMk',
+        {
+          repo_name: repository.full_name,
+          commit_id: commitId,
+          commit_message: message,
+          compare_url: req.body.compare
+        }
+      );
+      console.log('Power Automate flow triggered for push:', response.status);
+    } catch (error) {
+      console.error('Error triggering Power Automate flow for push:', error.message);
+    }
+
+  } else if (action === 'opened' || action === 'synchronize') {
+    // Handle pull request event
     console.log(`Pull request #${pull_request.number} in ${repository.name} was updated`);
 
-    const securityIssuesDetected = true; // Assume issues are found for this example
+    const securityIssuesDetected = true; // Example assumption
 
     if (securityIssuesDetected) {
-      // Send a POST request to Power Automate Flow to trigger an alert
       try {
-        const response = await axios.post('https://prod-39.westus.logic.azure.com:443/workflows/685245e42bc34f6889d519f536753e68/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=dXwzDGQpN4J6jkDs4uRA7t7i0nJY0vFbHhTuE58kZBk', {
-          message: `Security issue detected in pull request #${pull_request.number} for repo ${repository.name}!`,
-        });
-
-        console.log('Power Automate flow triggered:', response.status);
+        const response = await axios.post(
+          'https://prod-168.westus.logic.azure.com:443/workflows/46312203162d41f88f42b9e60e22952c/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=GFBFZkThBJhqQouBnU4Jq73RTZmWiU5m-JKye6GWKMk',
+          {
+            message: `Security issue detected in pull request #${pull_request.number} for repo ${repository.name}!`
+          }
+        );
+        console.log('Power Automate flow triggered for PR:', response.status);
       } catch (error) {
-        console.error('Error triggering Power Automate flow:', error);
+        console.error('Error triggering Power Automate flow for PR:', error.message);
       }
     }
 
-    // Trigger SonarCloud analysis after a pull request event
     const analysisResult = await analyzeCodeWithSonarCloud(repository);
-    
+
     if (analysisResult && analysisResult.issues && analysisResult.issues.length > 0) {
       console.log('Security issues found:', analysisResult.issues);
-      // You can implement further actions here, like sending alerts to teams or developers
     } else {
       console.log('No issues found in the code');
     }
-
-    // Send a response back to GitHub only after processing is complete
-    res.status(200).send('Security check complete and processed');
-  } else {
-    // If the action is not 'opened' or 'synchronize', we don't need to process further
-    res.status(200).send('No action required');
   }
+
+  res.status(200).send('Webhook processed');
 });
 
 // Start the server
