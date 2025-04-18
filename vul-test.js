@@ -1,17 +1,22 @@
-// Simulating vulnerable code with SQL Injection
-const userInput = "' OR 1=1 --"; // Malicious input that will bypass authentication
+const express = require('express');
+const { exec } = require('child_process');
 
-// Unsafe SQL query construction
-const query = `SELECT * FROM users WHERE username = '${userInput}' AND password = 'password'`;
+const app = express();
+const port = 3000;
 
-console.log("Generated Query: ", query);
+app.get('/ping', (req, res) => {
+  const ip = req.query.ip;
 
-// Assume query is executed in a real database (this is just for simulation)
-const database = [
-  { username: 'admin', password: 'password' },
-  { username: 'user', password: 'userpassword' },
-];
+  // ⚠️ Vulnerable to command injection: no input validation
+  exec(`ping -c 1 ${ip}`, (err, stdout, stderr) => {
+    if (err) {
+      res.status(500).send(`Error: ${stderr}`);
+    } else {
+      res.send(`<pre>${stdout}</pre>`);
+    }
+  });
+});
 
-// Simulating the query execution
-const result = database.filter(user => user.username === userInput.split(' ')[0]);
-console.log("Query Result: ", result);
+app.listen(port, () => {
+  console.log(`App listening on port ${port}`);
+});
