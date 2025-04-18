@@ -1,0 +1,1 @@
+const username = "' OR 1=1 --"; const password = "password123"; const query = \`SELECT * FROM users WHERE username = '\${username}' AND password = '\${password}'\`; console.log('Executing query:', query); function executeQuery(query) { console.log('Query executed:', query); } executeQuery(query); 
