@@ -1,22 +1,36 @@
+// Vulnerable code: SQL Injection
+
 const express = require('express');
-const { exec } = require('child_process');
-
 const app = express();
-const port = 3000;
+const bodyParser = require('body-parser');
 
-app.get('/ping', (req, res) => {
-  const ip = req.query.ip;
+// Middleware to parse JSON requests
+app.use(bodyParser.json());
 
-  // ⚠️ Vulnerable to command injection: no input validation
-  exec(`ping -c 1 ${ip}`, (err, stdout, stderr) => {
-    if (err) {
-      res.status(500).send(`Error: ${stderr}`);
-    } else {
-      res.send(`<pre>${stdout}</pre>`);
-    }
-  });
+// Database simulation (For the sake of this example)
+let users = [
+  { id: 1, username: 'admin', password: 'admin123' },
+  { id: 2, username: 'user', password: 'password' }
+];
+
+// Vulnerable route to simulate login
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  // Vulnerable query that can be exploited with SQL injection
+  const query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+
+  // Simulate checking the database
+  const user = users.find(u => u.username === username && u.password === password);
+
+  if (user) {
+    res.send('Login successful');
+  } else {
+    res.send('Invalid credentials');
+  }
 });
 
-app.listen(port, () => {
-  console.log(`App listening on port ${port}`);
+// Start the server
+app.listen(3000, () => {
+  console.log('Server is running on port 3000');
 });
