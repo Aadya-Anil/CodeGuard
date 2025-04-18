@@ -45,7 +45,7 @@ app.post('/webhook', async (req, res) => {
     if (securityIssuesDetected) {
       // Send a POST request to Power Automate Flow to trigger an alert
       try {
-        const response = await axios.post('https://your_power_automate_flow_url', {
+        const response = await axios.post('https://prod-39.westus.logic.azure.com:443/workflows/685245e42bc34f6889d519f536753e68/triggers/manual/paths/invoke?api-version=2016-06-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=dXwzDGQpN4J6jkDs4uRA7t7i0nJY0vFbHhTuE58kZBk', {
           message: `Security issue detected in pull request #${pull_request.number} for repo ${repository.name}!`,
         });
 
