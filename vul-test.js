@@ -1,27 +1,21 @@
-// vul-test.js
+// Simple secure JavaScript program: User Input Validation
 
-const express = require('express');
-const app = express();
-const fs = require('fs');
-const path = require('path');
+function greetUser() {
+  // Get user input
+  let userName = prompt("Please enter your name:");
 
-// 🚨 XSS Vulnerability
-app.get('/greet', (req, res) => {
-  const name = req.query.name || 'guest';
-  res.send(`<h1>Welcome, ${name}!</h1>`); // Unsanitized input rendered in HTML
-});
+  // Validate input (check if it's not empty and is a valid string)
+  if (userName.trim() === "") {
+      alert("Name cannot be empty!");
+      return;
+  }
 
-// 🚨 Insecure File Access (Path Traversal)
-app.get('/file', (req, res) => {
-  const filename = req.query.filename;
-  const filepath = path.join(__dirname, 'public', filename); // No path sanitization
+  // Prevent XSS by safely encoding the user input before displaying it
+  let safeUserName = userName.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  fs.readFile(filepath, 'utf8', (err, data) => {
-    if (err) return res.status(404).send('File not found');
-    res.send(data);;
-  });
-});
+  // If input is valid, greet the user
+  alert("Hello, " + safeUserName + "!");
+}
 
-app.listen(3001, () => {
-  console.log('Vulnerable server running on port 3001');
-});
+// Run the function
+greetUser();
