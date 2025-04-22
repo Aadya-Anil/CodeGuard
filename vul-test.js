@@ -1,38 +1,27 @@
-// Vulnerable code: SQL Injection
+// vul-test.js
 
 const express = require('express');
 const app = express();
-const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
 
-// Middleware to parse JSON requests
-app.use(bodyParser.json());
-
-// Database simulation (For the sake of this example)
-let users = [
-  { id: 1, username: 'admin', password: 'admin123' },
-  { id: 2, username: 'user', password: 'password' }
-];
-
-// Vulnerable route to simulate login
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-
-  // Vulnerable query that can be exploited with SQL injection
-  const query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
-
-  // Simulate checking the database
-  const user = users.find(u => u.username === username && u.password === password);
-
-  if (user) {
-    res.send('Login successful');
-  } else {
-    res.send('Invalid credentials');
-  }
+// 🚨 XSS Vulnerability
+app.get('/greet', (req, res) => {
+  const name = req.query.name || 'guest';
+  res.send(`<h1>Welcome, ${name}!</h1>`); // Unsanitized input rendered in HTML
 });
 
-// Start the server
-app.listen(3000, () => {
-  console.log('Server is running on port 3000');
+// 🚨 Insecure File Access (Path Traversal)
+app.get('/file', (req, res) => {
+  const filename = req.query.filename;
+  const filepath = path.join(__dirname, 'public', filename); // No path sanitization
+
+  fs.readFile(filepath, 'utf8', (err, data) => {
+    if (err) return res.status(404).send('File not found');
+    res.send(data);
+  });
 });
 
-eval("console.log('This is bad')");"// test push trigger" 
+app.listen(3001, () => {
+  console.log('Vulnerable server running on port 3001');
+});
